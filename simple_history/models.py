@@ -8,6 +8,7 @@ import warnings
 
 import django
 import six
+from itertools import chain
 from django.apps import apps
 from django.conf import settings
 from django.contrib import admin
@@ -16,7 +17,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
 from django.db.models.fields.proxy import OrderWrt
-from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils.text import format_lazy
 from django.utils.timezone import now
@@ -34,6 +34,16 @@ else:
     from django.utils.encoding import smart_str
 
 registered_models = {}
+
+
+def _model_to_dict(instance):
+    opts = instance._meta
+    data = {}
+    for f in chain(opts.concrete_fields, opts.private_fields):
+        data[f.name] = f.value_from_object(instance)
+    for f in opts.many_to_many:
+        data[f.name] = [i.id for i in f.value_from_object(instance)]
+    return data
 
 
 def _default_get_user(request, **kwargs):
@@ -581,8 +591,8 @@ class HistoricalChanges(object):
 
         changes = []
         changed_fields = []
-        old_values = model_to_dict(old_history.instance)
-        current_values = model_to_dict(self.instance)
+        old_values = _model_to_dict(old_history.instance)
+        current_values = _model_to_dict(self.instance)
         for field, new_value in current_values.items():
             if field in old_values:
                 old_value = old_values[field]

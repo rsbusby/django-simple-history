@@ -319,6 +319,7 @@ class HistoricalRecordsTest(TestCase):
     def test_inheritance(self):
         pizza_place = Restaurant.objects.create(name="Pizza Place", rating=3)
         pizza_place.rating = 4
+        pizza_place.name = "Pizza Spot"
         pizza_place.save()
         update_record, create_record = Restaurant.updates.all()
         self.assertRecordValues(
@@ -335,12 +336,15 @@ class HistoricalRecordsTest(TestCase):
             update_record,
             Restaurant,
             {
-                "name": "Pizza Place",
+                "name": "Pizza Spot",
                 "rating": 4,
                 "id": pizza_place.id,
                 "history_type": "~",
             },
         )
+        record_diff = update_record.diff_against(create_record)
+        assert 'auto_now_updated' in record_diff.changed_fields
+        assert 'name' in record_diff.changed_fields
 
     def test_specify_history_user(self):
         user1 = User.objects.create_user("user1", "1@example.com")

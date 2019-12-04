@@ -166,6 +166,7 @@ register(Voter, records_class=HistoricalRecordsVerbose)
 
 class Place(models.Model):
     name = models.CharField(max_length=100)
+    auto_now_updated = models.DateTimeField(auto_now=True)
 
 
 class Restaurant(Place):
